@@ -1,0 +1,7 @@
+make clean
+find /home/ktk57/dev/src/github.com/ktk57/mbf -name "*.c" -o -name "*.cc" -o -name "*.proto" -o -name "*.h" > cscope.files
+find /home/http/FCGI_ADSERVER/Build/json-c-0.9 -name "*.c" -o -name "*.cc" -o -name "*.proto" -o -name "*.h" >> cscope.files
+find /home/http/FCGI_ADSERVER/Build/gtest-1.7.0 -name "*.c" -o -name "*.cc" -o -name "*.proto" -o -name "*.h" >> cscope.files
+cscope -b
+export CSCOPE_DB=/home/ktk57/dev/src/github.com/ktk57/mbf/cscope.out
+ctags -R

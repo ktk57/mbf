@@ -1,0 +1,629 @@
+	int retval = DB_ERROR_SUCCESS;
+	cmpg_sp_info_t* ret_map = NULL;
+	cmpg_sp_info_t* tmp_map = NULL;
+	SQLHANDLE statement_handle = 0;
+	SQLRETURN sql_retval = SQL_SUCCESS;
+	SQLCHAR sql_statement[MAX_SQL_QUERY_STR_LEN + 1];
+
+	SQLINTEGER s_campaign_id = 0;
+	SQLLEN cb_s_campaign_id = 0;
+
+	SQLINTEGER s_impr_percentage = 0;
+	SQLLEN cb_s_impr_percentage = 0;
+
+	SQLINTEGER s_algo_v2_percent = 0;
+	SQLLEN cb_s_algo_v2_percent = 0;
+
+	SQLINTEGER s_mode = 0;
+	SQLLEN cb_s_mode = 0;
+
+	SQLDOUBLE s_var_A;
+	SQLLEN cb_s_var_A = 0;
+
+	SQLDOUBLE s_var_B;
+	SQLLEN cb_s_var_B = 0;
+
+	SQLDOUBLE s_var_D;
+	SQLLEN cb_s_var_D = 0;
+
+	SQLDOUBLE s_var_r;
+	SQLLEN cb_s_var_r = 0;
+
+	SQLDOUBLE s_var_s;
+	SQLLEN cb_s_var_s = 0;
+
+	SQLDOUBLE s_var_t;
+	SQLLEN cb_s_var_t = 0;
+
+	SQLDOUBLE s_cp_boost_factor;
+	SQLLEN cb_cp_boost_factor = 0;
+
+	SQLDOUBLE s_cp_boost_var_D;
+	SQLLEN cb_cp_boost_var_D = 0;
+
+	int record_found = 0;
+
+	(*sp_info) = NULL;
+
+
+	/* Allocate the statement handle */
+	SQLAllocHandle(SQL_HANDLE_STMT, dbconn->con_handle, &statement_handle);
+
+	/* Create SQL char string which contains the query */
+	strncpy((char *) sql_statement, GET_CMPG_SP_INFO, MAX_SQL_QUERY_STR_LEN );
+	sql_statement[MAX_SQL_QUERY_STR_LEN] = '\0';
+
+
+	/* Create a prepared statement */
+	sql_retval = SQLPrepare(statement_handle, sql_statement, SQL_NTS);
+	if (sql_retval != SQL_SUCCESS) {
+		LOG_CRITICAL(SQL_PREPARE_FAILED, MOD_DEFAULT);
+		print_error((SQLSMALLINT)SQL_HANDLE_STMT,statement_handle, sql_retval,__LINE__,__FILE__ );
+		retval = DB_ERROR_INTERNAL;
+		goto done;
+	}
+
+	/* Bind parameters : campaign_id */
+	sql_retval = SQLBindParameter(statement_handle, 1, SQL_PARAM_INPUT, SQL_C_ULONG,
+			SQL_INTEGER, 0, 0, &s_campaign_id, 0, &cb_s_campaign_id);
+	if (sql_retval != SQL_SUCCESS) {
+		printf("\nError binding:\n");
+		print_error((SQLSMALLINT)SQL_HANDLE_STMT,statement_handle, sql_retval,__LINE__,__FILE__ );
+		retval = DB_ERROR_INTERNAL;
+		goto done;
+	}
+	s_campaign_id = campaign_id;
+
+	// Execute The SQL Statement
+	sql_retval = SQLExecute(statement_handle);
+
+	if (sql_retval == SQL_SUCCESS) {
+		/* Bind Column : var_A */
+		sql_retval = SQLBindCol(statement_handle, 1, SQL_C_DOUBLE, &s_var_A, 0, &cb_s_var_A);
+		if (sql_retval != SQL_SUCCESS) {
+			print_error((SQLSMALLINT)SQL_HANDLE_STMT, statement_handle, sql_retval, __LINE__, __FILE__ );
+			SQLFreeHandle(SQL_HANDLE_STMT, statement_handle);
+			retval = DB_ERROR_INTERNAL;
+			goto done;
+		}
+
+		/* Bind Column : var_B */
+		sql_retval = SQLBindCol(statement_handle, 2, SQL_C_DOUBLE, &s_var_B, 0, &cb_s_var_B);
+		if (sql_retval != SQL_SUCCESS) {
+			print_error((SQLSMALLINT)SQL_HANDLE_STMT, statement_handle, sql_retval, __LINE__, __FILE__ );
+			SQLFreeHandle(SQL_HANDLE_STMT, statement_handle);
+			retval = DB_ERROR_INTERNAL;
+			goto done;
+		}
+
+		/* Bind Column : var_D */
+		sql_retval = SQLBindCol(statement_handle, 3, SQL_C_DOUBLE, &s_var_D, 0, &cb_s_var_D);
+		if (sql_retval != SQL_SUCCESS) {
+			print_error((SQLSMALLINT)SQL_HANDLE_STMT, statement_handle, sql_retval, __LINE__, __FILE__ );
+			SQLFreeHandle(SQL_HANDLE_STMT, statement_handle);
+			retval = DB_ERROR_INTERNAL;
+			goto done;
+		}
+		/* Bind Column : var_r */
+		sql_retval = SQLBindCol(statement_handle, 4, SQL_C_DOUBLE, &s_var_r, 0, &cb_s_var_r);
+		if (sql_retval != SQL_SUCCESS) {
+			print_error((SQLSMALLINT)SQL_HANDLE_STMT, statement_handle, sql_retval, __LINE__, __FILE__ );
+			SQLFreeHandle(SQL_HANDLE_STMT, statement_handle);
+			retval = DB_ERROR_INTERNAL;
+			goto done;
+		}
+		/* Bind Column : var_s */
+		sql_retval = SQLBindCol(statement_handle, 5, SQL_C_DOUBLE, &s_var_s, 0, &cb_s_var_s);
+		if (sql_retval != SQL_SUCCESS) {
+			print_error((SQLSMALLINT)SQL_HANDLE_STMT, statement_handle, sql_retval, __LINE__, __FILE__ );
+			SQLFreeHandle(SQL_HANDLE_STMT, statement_handle);
+			retval = DB_ERROR_INTERNAL;
+			goto done;
+		}
+		/* Bind Column : var_t */
+		sql_retval = SQLBindCol(statement_handle, 6, SQL_C_DOUBLE, &s_var_t, 0, &cb_s_var_t);
+		if (sql_retval != SQL_SUCCESS) {
+			print_error((SQLSMALLINT)SQL_HANDLE_STMT, statement_handle, sql_retval, __LINE__, __FILE__ );
+			SQLFreeHandle(SQL_HANDLE_STMT, statement_handle);
+			retval = DB_ERROR_INTERNAL;
+			goto done;
+		}
+
+		/* Bind Column : mode */
+		sql_retval = SQLBindCol(statement_handle, 7, SQL_C_LONG, &s_mode, 0, &cb_s_mode);
+		if (sql_retval != SQL_SUCCESS) {
+			print_error((SQLSMALLINT)SQL_HANDLE_STMT, statement_handle, sql_retval, __LINE__, __FILE__ );
+			SQLFreeHandle(SQL_HANDLE_STMT, statement_handle);
+			retval = DB_ERROR_INTERNAL;
+			goto done;
+		}
+		/* Bind Column : impr_percentage */
+		sql_retval = SQLBindCol(statement_handle, 8, SQL_C_LONG, &s_impr_percentage, 0, &cb_s_impr_percentage);
+		if (sql_retval != SQL_SUCCESS) {
+			print_error((SQLSMALLINT)SQL_HANDLE_STMT, statement_handle, sql_retval, __LINE__, __FILE__ );
+			SQLFreeHandle(SQL_HANDLE_STMT, statement_handle);
+			retval = DB_ERROR_INTERNAL;
+			goto done;
+		}
+		/* Bind Column : algo_v2_percent */
+		sql_retval = SQLBindCol(statement_handle, 9, SQL_C_LONG, &s_algo_v2_percent, 0, &cb_s_algo_v2_percent);
+		if (sql_retval != SQL_SUCCESS) {
+			print_error((SQLSMALLINT)SQL_HANDLE_STMT, statement_handle, sql_retval, __LINE__, __FILE__ );
+			SQLFreeHandle(SQL_HANDLE_STMT, statement_handle);
+			retval = DB_ERROR_INTERNAL;
+			goto done;
+		}
+
+		/* Bind Column : cp_boost_factor */
+		sql_retval = SQLBindCol(statement_handle, 10, SQL_C_DOUBLE, &s_cp_boost_factor, 0, &cb_cp_boost_factor);
+		if (sql_retval != SQL_SUCCESS) {
+			print_error((SQLSMALLINT)SQL_HANDLE_STMT, statement_handle, sql_retval, __LINE__, __FILE__ );
+			SQLFreeHandle(SQL_HANDLE_STMT, statement_handle);
+			retval = DB_ERROR_INTERNAL;
+			goto done;
+		}
+		/* Bind Column : var_t */
+		sql_retval = SQLBindCol(statement_handle, 11, SQL_C_DOUBLE, &s_cp_boost_var_D, 0, &cb_cp_boost_var_D);
+		if (sql_retval != SQL_SUCCESS) {
+			print_error((SQLSMALLINT)SQL_HANDLE_STMT, statement_handle, sql_retval, __LINE__, __FILE__ );
+			SQLFreeHandle(SQL_HANDLE_STMT, statement_handle);
+			retval = DB_ERROR_INTERNAL;
+			goto done;
+		}
+
+		ret_map = (cmpg_sp_info_t*) malloc(sizeof(cmpg_sp_info_t));
+
+		if (ret_map == NULL) {
+			LOG_FATAL(MEMORY_ALLOC_FAILED, MOD_DEFAULT, __FILE__,__LINE__);
+			retval = DB_ERROR_NO_MEMORY;
+			goto done;
+		}
+		/*
+		 * This is not a while loop since campaign_id is primary key and hence would execute only once
+		 */
+
+		while (sql_retval != SQL_NO_DATA)
+		{
+			sql_retval = SQLFetch(statement_handle);
+			if (sql_retval != SQL_NO_DATA) {
+				ret_map->var_A = s_var_A;
+				ret_map->var_B = s_var_B;
+				/*
+				 * If var_D = 0.0 or -ve, log(1 + var_D) would be -ve
+				 * Don't want a bad value in DB to result in application
+				 * crashes (^_-)
+				 */
+				ret_map->var_D = (s_var_D > 0.0)?s_var_D:0.08;
+				ret_map->r = s_var_r;
+				ret_map->s = s_var_s;
+				ret_map->t = s_var_t;
+				ret_map->mode = s_mode;
+				ret_map->impr_percentage = s_impr_percentage;
+				// In case of incorrect db entry, Just ignore this algorithm
+				ret_map->algo_v2_percent = (s_algo_v2_percent >= 0 && s_algo_v2_percent <=100)?s_algo_v2_percent:0;
+				ret_map->cp_boost_factor = (s_cp_boost_factor >= 0.0)?s_cp_boost_factor :1.0;
+				ret_map->cp_boost_var_D = (s_cp_boost_var_D > 0.0)?s_cp_boost_var_D:0.025;
+				record_found = 1;
+			}
+		}
+	} else {
+		fprintf(stderr, "\nError executing select statement, %s:%d\n",__FILE__,__LINE__);
+		print_error((SQLSMALLINT)SQL_HANDLE_STMT,statement_handle,
+				sql_retval,__LINE__,__FILE__ );
+		retval = DB_ERROR_INTERNAL;
+		goto done;
+	}
+
+done:
+	// Free The SQL Statement Handle
+	if (statement_handle != NULL) {
+		SQLFreeHandle(SQL_HANDLE_STMT, statement_handle);
+	}
+	if (record_found == 0) {
+		/*
+		 * free(NULL) is valid
+		 * but still :(
+		 */
+		if (ret_map != NULL) {
+			free(ret_map);
+		}
+		ret_map = NULL;
+	}
+	(*sp_info) = ret_map;
+	return retval;
+=============
+#ifndef __DB_MBF_H__
+#define __DB_MBF_H__
+
+#include <sql.h>
+#include <sqlext.h>
+#include <sqltypes.h>
+#include <time.h>
+
+#define MAX_SQL_QUERY_STR_LEN	8192
+#define MAX_TIMESTAMP_SIZE_YYYYMMDD 24
+
+#define DB_ERROR_BASE	0
+#define DB_ERROR_SUCCESS	(DB_ERROR_BASE)
+#define DB_ERROR_CONNECTION	(DB_ERROR_BASE + 1)
+#define DB_ERROR_INTERNAL	(DB_ERROR_BASE + 2)
+#define DB_ERROR_INVALID_ARGS	(DB_ERROR_BASE + 3)
+#define DB_ERROR_NOT_FOUND		(DB_ERROR_BASE + 4)
+#define DB_ERROR_NO_MEMORY		(DB_ERROR_BASE + 5)
+/* Added for Mobile */
+#define DB_SQL_QUERY_SIZE_EXCEED (DB_ERROR_BASE + 6)
+#define DB_ERROR_BINDING_ERROR	 (DB_ERROR_BASE + 7)
+#define DB_ERROR_STATEMENT_PREPARE (DB_ERROR_BASE + 8)
+
+
+typedef struct db_connection {
+	SQLHANDLE con_handle; /* SQL Connection handle */
+	char timestamp[MAX_TIMESTAMP_SIZE_YYYYMMDD + 1];
+} db_connection_t;
+
+typedef struct db_env {
+	SQLHANDLE env_handle; /* SQL Environment handle */
+} db_env_t;
+
+
+/* Initilize the db environment */
+int init_db_env(db_env_t *db_env);
+
+/* Release the db environment */
+void release_db_env(db_env_t *db_env);
+
+/* Opens connection with the database and returns a handle for the connection */
+int get_db_connection(
+		db_connection_t *dbconn, /* DB connection handle */
+		db_env_t *db_env, /* DB environment handle */
+		char * dsnName, /* DSN name */
+		char *username, /* User name */
+		char *password); /* Password */
+
+/* Release the db connection opened */
+void release_db_connection(db_connection_t *dbconn);
+
+/* print db errors */
+void print_error(
+		SQLSMALLINT htype, /* A handle type identifier */
+		SQLHANDLE   hndl,  /* A handle */
+		SQLRETURN   frc,   /* Return code to be included with error msg  */
+		int         line,  /* Used for output message, indcate where     */
+		char *      file   /* the error was reported from  */
+		);
+
+#endif /* DB_CONNECTION_H */
+
+#define DB_ERROR_BASE	0
+#define DB_ERROR_SUCCESS	(DB_ERROR_BASE)
+#define DB_ERROR_CONNECTION	(DB_ERROR_BASE + 1)
+#define DB_ERROR_INTERNAL	(DB_ERROR_BASE + 2)
+#define DB_ERROR_INVALID_ARGS	(DB_ERROR_BASE + 3)
+#define DB_ERROR_NOT_FOUND		(DB_ERROR_BASE + 4)
+#define DB_ERROR_NO_MEMORY		(DB_ERROR_BASE + 5)
+/* Added for Mobile */
+#define DB_SQL_QUERY_SIZE_EXCEED (DB_ERROR_BASE + 6)
+#define DB_ERROR_BINDING_ERROR	 (DB_ERROR_BASE + 7)
+#define DB_ERROR_STATEMENT_PREPARE (DB_ERROR_BASE + 8)
+========
+#include <stdio.h>
+#include <string.h>
+#include "db_connection.h"
+#include "db_error.h"
+
+int init_db_env(db_env_t *dbenv) {
+
+	/* Local variables */
+	//
+	/* Commented to remove the warning
+	SQLRETURN retval = SQL_SUCCESS;
+	*/
+	//~
+
+	/* Allocate an envoironment handle */
+	SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &(dbenv->env_handle));
+
+	/*
+	 * Check if we environment handle is valid and then proceed further
+	 */
+	if (dbenv->env_handle == 0) {
+
+		/* could not allocate the environment handle so return error */
+		return DB_ERROR_INTERNAL;
+	}
+	SQLSetEnvAttr(dbenv->env_handle, SQL_ATTR_ODBC_VERSION,(SQLPOINTER) SQL_OV_ODBC3,
+			SQL_IS_UINTEGER);
+
+	return DB_ERROR_SUCCESS;
+}
+
+void release_db_env(db_env_t *dbenv) {
+	if (dbenv->env_handle != 0) {
+		SQLFreeHandle(SQL_HANDLE_ENV, dbenv->env_handle);
+	}
+}
+
+#define MAX_MYSQL_CACHE_TIME_FOR_NOW_QUERIES 900
+
+void set_time_for_queries(db_connection_t *komli, 
+													db_connection_t *adflex) {
+	time_t rawtime;
+	struct tm * timeinfo;
+	time ( &rawtime );
+	rawtime = rawtime - rawtime%MAX_MYSQL_CACHE_TIME_FOR_NOW_QUERIES;
+	timeinfo = localtime(&rawtime);
+	strftime (komli->timestamp, 24,"%Y-%m-%d %H-%M-%S", timeinfo);
+	strcpy(adflex->timestamp, komli->timestamp);
+	//fprintf(stderr, "Formatted Time:%s\n%s\n", adflex->timestamp, komli->timestamp);
+	return ;
+}
+
+
+/* Opens connection with the database and returns a handle for the connection */
+int get_db_connection(
+		db_connection_t *dbconn,
+		db_env_t *dbenv,
+		char *dsn_name,
+		char *username,
+		char *password) {
+
+	/* Local variables */
+	SQLRETURN retval = SQL_SUCCESS;
+
+	/* check if the input parameters are valid */
+	if ((dbconn == NULL) || (dsn_name == NULL) || (username == NULL) ||
+			(password == NULL)) {
+		/* Return invalid arguments error */
+		return DB_ERROR_INVALID_ARGS;
+	}
+
+	/* Allocate connection handle */
+	SQLAllocHandle(SQL_HANDLE_DBC, dbenv->env_handle, &(dbconn->con_handle));
+
+	/*
+	 * Check if we could allocate the connection handle and then proceed
+	 * further
+	 */
+	if (dbconn->con_handle == 0) {
+
+		/*
+		 * could not allocate the connection handle so return error
+		 */
+		return DB_ERROR_INTERNAL;
+	}
+
+	/* connect to the specified datasource with given parameters */
+	retval = SQLConnect(dbconn->con_handle,
+			(SQLCHAR *) dsn_name, SQL_NTS,
+			(SQLCHAR *) username, SQL_NTS,
+			(SQLCHAR *) password, SQL_NTS);
+	
+	/* Check the connection was successfull opened */
+	if ((dbconn->con_handle != 0) && (retval == SQL_SUCCESS)) {
+
+		/* Connection was successfully opened */
+		return DB_ERROR_SUCCESS;
+	}
+	else
+	{
+		 fprintf(stderr,"SQLConnect %d\n",retval);
+		  print_error(SQL_HANDLE_DBC,dbconn->con_handle,retval,__LINE__,__FILE__);
+	}
+
+	/*
+	 * Reaches here if there was an error, so free the connection handle and
+	 * return error
+	 */
+	if (dbconn->con_handle != 0) {
+		SQLFreeHandle(SQL_HANDLE_DBC, dbconn->con_handle);
+	}
+
+	return DB_ERROR_CONNECTION;
+}
+
+/* Release the db connection opened */
+void release_db_connection(db_connection_t *dbconn) {
+	// Terminate The Data Source Connection
+	if (dbconn->con_handle != 0) {
+		SQLDisconnect(dbconn->con_handle);
+	}
+
+	// Free The Connection Handle
+	if (dbconn->con_handle != 0) {
+		SQLFreeHandle(SQL_HANDLE_DBC, dbconn->con_handle);
+	}
+}
+
+void print_error(
+		SQLSMALLINT htype, /* A handle type identifier */
+		SQLHANDLE   hndl,  /* A handle */
+		SQLRETURN   frc,   /* Return code to be included with error msg  */
+		int         line,  /* Used for output message, indcate where     */
+		char *      file   /* the error was reported from  */
+		) {
+
+	SQLCHAR     buffer[SQL_MAX_MESSAGE_LENGTH + 1] ;
+	SQLCHAR     sqlstate[SQL_SQLSTATE_SIZE + 1] ;
+	SQLINTEGER  sqlcode ;
+	SQLSMALLINT length, i ;
+	SQLINTEGER NumRecords;
+
+	fprintf(stderr, ">--- ERROR -- RC = %d Reported from %s, line %d ------------\n",
+			frc,
+			file,
+			line
+		  ) ;
+	SQLGetDiagField(htype, hndl, 0,SQL_DIAG_NUMBER, &NumRecords, SQL_IS_INTEGER,NULL);
+	//kartik_cleanup
+	//fprintf(stderr,"Total Number of diagnostic records: %d\n",NumRecords);
+	fprintf(stderr,"Total Number of diagnostic records: %ld\n", (long int) NumRecords);
+	//~kartik_cleanup
+	i = 1 ;
+	while ( SQLGetDiagRec( htype,
+				hndl,
+				i,
+				sqlstate,
+				&sqlcode,
+				buffer,
+				SQL_MAX_MESSAGE_LENGTH + 1,
+				&length
+				) == SQL_SUCCESS ) {
+		fprintf(stderr, "         SQLSTATE: %s\n", sqlstate ) ;
+		fprintf(stderr, "Native Error Code: %ld\n", (long int)sqlcode ) ;
+		fprintf(stderr, "%s \n", buffer ) ;
+		i++ ;
+	}
+
+	fprintf( stderr,">--------------------------------------------------\n" ) ;
+}
+
+// ===========
+// This file contains garbage that I think, *might* be useful in some future project
+	 class str_vec_ {
+
+	 private:
+	 char **buf;
+	 int size;
+	 int capacity;
+
+	 public:
+	 str_vec_():buf(NULL), size(0), capacity(0) {
+	 }
+
+	 str_vec_(int sz):buf(NULL), size(0), capacity(sz) {
+	 buf = (char**) malloc(sizeof(char*) * capacity);
+// No error handling
+for (int i = 0; i < capacity; i++) {
+buf[i] = NULL;
+}
+}
+
+string get(int i) {
+if (i >= size) {
+return NULL;
+}
+return buf[i];
+}
+
+int sz() {
+return size;
+}
+
+int insert(string str) {
+if (size >= capacity) {
+fprintf(stderr, "\nERROR vector is full %s:%d\n", __FILE__, __LINE__);
+return -1;
+}
+buf[size] = strdup(str);
+// No error checking
+size++;
+}
+
+~str_vec_() {
+for (int i = 0; i < size; i++) {
+free(buf[i]);
+}
+free(buf);
+}
+}
+			 vector<uint16_t> find1(const vector<string>& k) const
+			 {
+			 vector<uint16_t> empty;
+			 vector<uint16_t> result;
+
+			 for (int i = 0; i != static_cast<int>(k.size()); i++) {
+			 if (k[i].empty()) {
+			 continue;
+			 }
+			 if (i == 0) {
+			 result = get(k[i], i);
+			 continue;
+			 }
+			 if (result.size() == 0) {
+			 fprintf(stderr, "\nERROR returning %s:%s:%d\n", __FILE__, __func__, __LINE__);
+			 return empty;
+			 }
+			 auto v = get(k[i], i);
+			 if (v.size() == 0) {
+			 fprintf(stderr, "\nERROR returning %s:%s:%d\n", __FILE__, __func__, __LINE__);
+			 return empty;
+			 }
+
+			 auto sz = min(result.size(), v.size());
+			 vector<uint16_t> temp(sz);
+			 auto iter = set_intersection(result.begin(), result.end(), v.begin(), v.end(), temp.begin());
+			 temp.resize(iter - temp.begin());
+			 result = temp;
+			 }
+			 return result;
+			 }
+			 
+		/
+/*
+	 { "li": [ { "keys": [ "a", "b", "c" ], "values": [ "v_a", "v_b", "v_c" ] }, { "keys": [ "d", "e", "f" ], "values": [ "v_d", "v_e", "v_f" ] }, { "keys": [ "a", "b" ], "values": [ "v_a", "v_b", "v_b" ] } ],
+	 "prob":["123", "55", "67"],
+	 "p2p": ["0_253", "20_40", "60_80"]
+	 }
+	 */
+/*
+ * Fuction :- get_json_child_from_parent
+ * Desc:-
+ *      Function returns a child object from a parent json object. If child object is not found then NULL is returned.
+ *      Function also checks type of the child object. Even if child object is found but type does not match, NULL
+ *      will be returned.
+ * Parameters:-
+ *      1) parent_json_object:- parent json object.
+ *      2) key:- key for child object.
+ *      3) child_json_type :- type for child object.
+ */
+json_object *get_json_child_from_parent(
+  json_object *parent_json_object,
+  const char *key,
+	json_type child_json_type) {
+	/*
+	 * Local variables.
+	 */
+	json_object *child_json_object = NULL;
+
+	/*
+	 * Check function parameters.
+	 */
+	if ((parent_json_object == NULL) || (key == NULL) || (json_type_object != parent_json_object->o_type)){
+		fprintf(stderr, "Invalid parameters : '%s:%s:%d'\n", __FILE__, __FUNCTION__, __LINE__);
+		goto done;
+	}
+
+	child_json_object = json_object_object_get(parent_json_object, key);
+	if (child_json_object == NULL) {
+#ifdef DEBUG
+		fprintf(stderr, "Key : '%s' not present in json object\n", key);
+#endif
+		goto done;
+	}
+
+	/*
+	 * Now check object type.
+	 */
+	if (json_object_is_type(child_json_object, child_json_type) == 0) {
+#ifdef DEBUG
+		fprintf(stderr, "Invalid JSON object type : '%s:%s:%d'\n",
+				__FILE__, __FUNCTION__, __LINE__);
+#endif
+		child_json_object = NULL;
+		goto done;
+	}
+
+done:
+	return child_json_object;
+}
+
+
+/*
+  json_obj = json_tokener_parse(buffer);
+  if ((json_obj == NULL) || (is_error(json_obj))) {
+* 
+* json_object_array_get_idx(bid_arr, 0);
+* json_object_array_length(bid_arr);
+* bid_arr = get_json_child_from_parent(json_obj, BID_ARRAY, json_type_array);
+*/
+
